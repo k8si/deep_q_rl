@@ -207,12 +207,14 @@ class NeuralAgent(object):
         Add the most recent data to the data set and choose
         an action based on the current policy.
         """
-
         data_set.add_sample(self.last_img, self.last_action, reward, False)
+
+        # do this every phi'th frame ??
         if self.step_counter >= self.phi_length:
-            phi = data_set.phi(cur_img)
-            action = self.network.choose_action(phi, epsilon)
+            phi = data_set.phi(cur_img) # get sequence of image frames
+            action = self.network.choose_action(phi, epsilon) # either best next action or random action
         else:
+            # if its not a phi'th frame, pick a random action
             action = self.rng.randint(0, self.num_actions)
 
         return action

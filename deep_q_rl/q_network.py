@@ -209,9 +209,12 @@ class DeepQLearner:
         self.states_shared.set_value(states)
         return self._q_vals()[0]
 
+    #### change strategy here?
     def choose_action(self, state, epsilon):
+        # with probability epsilon, choose a random action
         if self.rng.rand() < epsilon:
             return self.rng.randint(0, self.num_actions)
+        # else choose "best" action
         q_vals = self.q_vals(state)
         return np.argmax(q_vals)
 
