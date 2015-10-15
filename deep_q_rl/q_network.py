@@ -222,9 +222,9 @@ class DeepQLearner:
 
     def choose_action_boltzmann(self, state, tau):
         q_vals = self.q_vals(state)
-        e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
+        e_q_vals = np.array(map(lambda x: np.exp(x/tau), q_vals))
         Z = np.sum(e_q_vals)
-        normalized = map(lambda x: x/Z, e_q_vals)
+        normalized = np.array(map(lambda x: x/Z, e_q_vals))
         np.random.choice(normalized.size, p=normalized)
 
     # def choose_action(self, state, epsilon):
