@@ -29,7 +29,10 @@ class DeepQLearner:
                  num_frames, discount, learning_rate, rho,
                  rms_epsilon, momentum, clip_delta, freeze_interval,
                  batch_size, network_type, update_rule,
-                 batch_accumulator, rng, input_scale=255.0):
+                 batch_accumulator, rng,
+                 input_scale=255.0,
+                 exploration_strategy='epsilon_greedy',
+                 ):
 
         self.input_width = input_width
         self.input_height = input_height
@@ -44,6 +47,8 @@ class DeepQLearner:
         self.clip_delta = clip_delta
         self.freeze_interval = freeze_interval
         self.rng = rng
+
+        self.exploration_strategy = exploration_strategy
 
         lasagne.random.set_rng(self.rng)
 
@@ -200,6 +205,7 @@ class DeepQLearner:
             self.reset_q_hat()
         loss, _ = self._train()
         self.update_counter += 1
+
         return np.sqrt(loss)
 
     def q_vals(self, state):
@@ -209,14 +215,25 @@ class DeepQLearner:
         self.states_shared.set_value(states)
         return self._q_vals()[0]
 
-    #### change strategy here?
     def choose_action(self, state, epsilon):
-        # with probability epsilon, choose a random action
-        if self.rng.rand() < epsilon:
-            return self.rng.randint(0, self.num_actions)
-        # else choose "best" action
-        q_vals = self.q_vals(state)
-        return np.argmax(q_vals)
+        """
+        @k8si use whatever exploration_strategy is specified to sample past q_vals and pick the next action
+        to use.
+        """
+        if self.exploration_strategy == 'epsilon_greedy' or self.exploration_strategy == 'epsilon_decay':
+            # with probability epsilon, choose a random action
+            if self.rng.rand() < epsilon:
+                return self.rng.randint(0, self.num_actions)
+            # else choose "best" action
+            q_vals = self.q_vals(state)
+            return np.argmax(q_vals)
+        else:
+            tau = 1.0
+            q_vals = self.q_vals(state)
+            e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
+            Z = np.sum(e_q_vals)
+            normalized = map(lambda x: x/Z, e_q_vals)
+            return np.argmax(normalized)
 
     def reset_q_hat(self):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)

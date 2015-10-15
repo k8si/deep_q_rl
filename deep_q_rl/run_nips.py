@@ -56,5 +56,7 @@ class Defaults:
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False
 
+    EXPLORATION_STRATEGY = 'epsilon-greedy'
+
 if __name__ == "__main__":
     launcher.launch(sys.argv[1:], Defaults, __doc__)

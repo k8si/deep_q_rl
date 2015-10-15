@@ -141,6 +141,9 @@ def process_args(args, defaults, description):
                         help=('Whether to use deterministic backprop. ' +
                               '(default: %(default)s)'))
 
+    ### exploration strategy arg
+    parser.add_argument('--exploration-strategy', dest="exploration_strategy", type=str, default=defaults.EXPLORATION_STRATEGY, help=('exploration strategy'))
+
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
         name = os.path.splitext(os.path.basename(parameters.rom))[0]
@@ -222,7 +225,8 @@ def launch(args, defaults, description):
                                          parameters.network_type,
                                          parameters.update_rule,
                                          parameters.batch_accumulator,
-                                         rng)
+                                         rng,
+                                         exploration_strategy=parameters.exploration_strategy)
     else:
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
@@ -255,7 +259,8 @@ def launch(args, defaults, description):
                                                   parameters.frame_skip,
                                                   parameters.death_ends_episode,
                                                   parameters.max_start_nullops,
-                                                  rng)
+                                                  rng
+                                                 )
     # 2 player
     else:
         agent2 = ale_agent.NeuralAgent(network,
@@ -266,7 +271,7 @@ def launch(args, defaults, description):
                                   parameters.experiment_prefix,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng)
+                                  rng,)
         experiment = ale_experiment.ALEExperimentMulti(ale,
                                                        agent, agent2,
                                                        defaults.RESIZED_WIDTH,
