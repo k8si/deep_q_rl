@@ -202,6 +202,7 @@ class NeuralAgent(object):
                     action = self._choose_action_boltzmann(self.data_set, self.tau, observation, np.clip(reward, -1, 1))
                     if self.step_counter % self.tau_minibatch_size == 0:
                         self.tau = max(self.tau_min, self.tau - self.tau_decay)
+                        print("tau update: tau=%f step=%d" % (self.tau, self.step_counter))
                     if self.step_counter % self.update_frequency == 0:
                         loss = self._do_training()
                         self.batch_counter += 1
