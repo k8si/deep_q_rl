@@ -218,14 +218,16 @@ class DeepQLearner:
             return self.rng.randint(0, self.num_actions)
         # else choose "best" action
         q_vals = self.q_vals(state)
-        return np.argmax(q_vals)
+        result = np.argmax(q_vals)
+        # print "result!!!", result
+        return result
 
     def choose_action_boltzmann(self, state, tau):
         q_vals = self.q_vals(state)
         e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
         Z = np.sum(e_q_vals)
         normalized = np.array(map(lambda x: x/Z, e_q_vals))
-        np.random.choice(normalized)
+        return np.random.choice(normalized)
 
     # def choose_action(self, state, epsilon):
     #     """
