@@ -22,7 +22,12 @@ class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, exp_pref,
-                 replay_start_size, update_frequency, rng):
+                 replay_start_size, update_frequency, rng,
+                 exploration_strategy,
+                 tau_start,
+                 tau_min,
+                 tau_decay,
+                 tau_minibatch_size):
 
         self.network = q_network
         self.epsilon_start = epsilon_start
@@ -33,6 +38,12 @@ class NeuralAgent(object):
         self.replay_start_size = replay_start_size
         self.update_frequency = update_frequency
         self.rng = rng
+
+        self.exploration_strategy = exploration_strategy
+        self.tau_start = tau_start
+        self.tau_min = tau_min
+        self.tau_decay = tau_decay
+        self.tau_minibatch_size = tau_minibatch_size
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
@@ -64,6 +75,9 @@ class NeuralAgent(object):
                                                   rng=rng,
                                                   max_steps=self.phi_length * 2,
                                                   phi_length=self.phi_length)
+
+        self.tau = self.tau_start
+
         self.epsilon = self.epsilon_start
         if self.epsilon_decay != 0:
             self.epsilon_rate = ((self.epsilon_start - self.epsilon_min) /
@@ -167,38 +181,63 @@ class NeuralAgent(object):
 
         """
 
+        strategy = self.exploration_strategy
+
         self.step_counter += 1
 
         #TESTING---------------------------
         if self.testing:
             self.episode_reward += reward
-            action = self._choose_action(self.test_data_set, .05,
+            if strategy == 'boltzmann':
+                action = self._choose_action_boltzmann(self.test_data_set, .05, observation, np.clip(reward, -1, 1))
+            else:
+                action = self._choose_action(self.test_data_set, .05,
                                          observation, np.clip(reward, -1, 1))
 
         #NOT TESTING---------------------------
         else:
 
-            if len(self.data_set) > self.replay_start_size:
-                self.epsilon = max(self.epsilon_min,
-                                   self.epsilon - self.epsilon_rate)
-
-                action = self._choose_action(self.data_set, self.epsilon,
-                                             observation,
-                                             np.clip(reward, -1, 1))
-
-                if self.step_counter % self.update_frequency == 0:
-                    loss = self._do_training()
-                    self.batch_counter += 1
-                    self.loss_averages.append(loss)
-
-            else: # Still gathering initial random data...
-                action = self._choose_action(self.data_set, self.epsilon,
-                                             observation,
-                                             np.clip(reward, -1, 1))
-
+            if strategy == 'boltzmann':
+                if len(self.data_set) > self.replay_start_size:
+                    action = self._choose_action_boltzmann(self.data_set, self.tau, observation, np.clip(reward, -1, 1))
+                    if self.step_counter % self.tau_minibatch_size == 0:
+                        self.tau = max(self.tau_min, self.tau - self.tau_decay)
+                    if self.step_counter % self.update_frequency == 0:
+                        loss = self._do_training()
+                        self.batch_counter += 1
+                        self.loss_averages.append(loss)
+                else:
+                    action = self._choose_action_boltzmann(self.data_set, self.tau, observation, np.clip(reward, -1, 1))
+            else:
+                if len(self.data_set) > self.replay_start_size:
+                    self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_rate)
+                    action = self._choose_action(self.data_set, self.epsilon, observation, np.clip(reward, -1, 1))
+                    if self.step_counter % self.update_frequency == 0:
+                        loss = self._do_training()
+                        self.batch_counter += 1
+                        self.loss_averages.append(loss)
+                else: # Still gathering initial random data...
+                    action = self._choose_action(self.data_set, self.epsilon, observation, np.clip(reward, -1, 1))
 
         self.last_action = action
         self.last_img = observation
+
+        return action
+
+    def _choose_action_boltzmann(self, data_set, tau, cur_img, reward):
+        """
+        Add the most recent data to the data set and choose
+        an action based on the current policy.
+        """
+        data_set.add_sample(self.last_img, self.last_action, reward, False)
+
+        # do this every phi'th frame ??
+        if self.step_counter >= self.phi_length:
+            phi = data_set.phi(cur_img) # get sequence of image frames
+            action = self.network.choose_action_boltzmann(phi, tau) # either best next action or random action
+        else:
+            # if its not a phi'th frame, pick a random action
+            action = self.rng.randint(0, self.num_actions)
 
         return action
 

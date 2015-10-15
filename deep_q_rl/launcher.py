@@ -43,11 +43,11 @@ def process_args(args, defaults, description):
     parser.add_argument('--experiment-prefix', dest="experiment_prefix",
                         default=None,
                         help='Experiment name prefix '
-                        '(default is the name of the game)')
+                             '(default is the name of the game)')
     parser.add_argument('--frame-skip', dest="frame_skip",
                         default=defaults.FRAME_SKIP, type=int,
                         help='Every how many frames to process '
-                        '(default: %(default)s)')
+                             '(default: %(default)s)')
     parser.add_argument('--repeat-action-probability',
                         dest="repeat_action_probability",
                         default=defaults.REPEAT_ACTION_PROBABILITY, type=float,
@@ -70,7 +70,7 @@ def process_args(args, defaults, description):
     parser.add_argument('--rms-epsilon', dest="rms_epsilon",
                         type=float, default=defaults.RMS_EPSILON,
                         help='Denominator epsilson for rms_prop ' +
-                        '(default: %(default)s)')
+                             '(default: %(default)s)')
     parser.add_argument('--momentum', type=float, default=defaults.MOMENTUM,
                         help=('Momentum term for Nesterov momentum. '+
                               '(default: %(default)s)'))
@@ -141,8 +141,13 @@ def process_args(args, defaults, description):
                         help=('Whether to use deterministic backprop. ' +
                               '(default: %(default)s)'))
 
-    ### exploration strategy arg
-    parser.add_argument('--exploration-strategy', dest="exploration_strategy", type=str, default=defaults.EXPLORATION_STRATEGY, help=('exploration strategy'))
+    # exploration strategy arg
+    parser.add_argument('--exploration-strategy', dest="exploration_strategy", type=str,
+                        default=defaults.EXPLORATION_STRATEGY, help=('exploration strategy'))
+    parser.add_argument('--tau-start', dest="tau_start", type=float, default=defaults.TAU_START)
+    parser.add_argument('--tau-min', dest="tau_min", type=float, default=defaults.TAU_MIN)
+    parser.add_argument('--tau-decay', dest="tau_decay", type=float, default=defaults.TAU_DECAY)
+    parser.add_argument('--tau-minibatch-size', dest="tau_minibatch_size", type=int, default=defaults.TAU_MINIBATCH_SIZE)
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -225,8 +230,7 @@ def launch(args, defaults, description):
                                          parameters.network_type,
                                          parameters.update_rule,
                                          parameters.batch_accumulator,
-                                         rng,
-                                         exploration_strategy=parameters.exploration_strategy)
+                                         rng)
     else:
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
@@ -245,7 +249,13 @@ def launch(args, defaults, description):
                                   parameters.experiment_prefix,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng)
+                                  rng,
+                                  parameters.exploration_strategy,
+                                  parameters.tau_start,
+                                  parameters.tau_min,
+                                  parameters.tau_decay,
+                                  parameters.tau_minibatch_size
+                                  )
 
     # 1 player
     if network2 is None:
@@ -260,18 +270,23 @@ def launch(args, defaults, description):
                                                   parameters.death_ends_episode,
                                                   parameters.max_start_nullops,
                                                   rng
-                                                 )
+                                                  )
     # 2 player
     else:
         agent2 = ale_agent.NeuralAgent(network,
-                                  parameters.epsilon_start,
-                                  parameters.epsilon_min,
-                                  parameters.epsilon_decay,
-                                  parameters.replay_memory_size,
-                                  parameters.experiment_prefix,
-                                  parameters.replay_start_size,
-                                  parameters.update_frequency,
-                                  rng,)
+                                       parameters.epsilon_start,
+                                       parameters.epsilon_min,
+                                       parameters.epsilon_decay,
+                                       parameters.replay_memory_size,
+                                       parameters.experiment_prefix,
+                                       parameters.replay_start_size,
+                                       parameters.update_frequency,
+                                       rng,
+                                       parameters.exploration_strategy,
+                                       parameters.tau_start,
+                                       parameters.tau_min,
+                                       parameters.tau_minibatch_size
+                                       )
         experiment = ale_experiment.ALEExperimentMulti(ale,
                                                        agent, agent2,
                                                        defaults.RESIZED_WIDTH,

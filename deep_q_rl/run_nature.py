@@ -8,6 +8,14 @@ Nature, 518(7540):529-533, February 2015
 
 """
 
+"""
+TODO can we give this a .pk file that's already been trained for 5 epochs, then start using
+our modifications?
+
+"""
+
+
+
 import launcher
 import sys
 
@@ -16,7 +24,7 @@ class Defaults:
     # Experiment Parameters
     # ----------------------
     STEPS_PER_EPOCH = 250000
-    EPOCHS = 200
+    EPOCHS = 200 #### 15
     STEPS_PER_TEST = 125000
 
     # ----------------------
@@ -62,6 +70,15 @@ class Defaults:
     CUDNN_DETERMINISTIC = False
 
     EXPLORATION_STRATEGY = 'epsilon-greedy'
+
+    TAU_START = 1000.0 # every epoch, tau = tau - 2.0
+    TAU_MIN = 1.0
+    TAU_DECAY = 2.0
+    TAU_MINIBATCH_SIZE = 200 ### decay tau every [this many] steps
+
+
+
+
 
 
 if __name__ == "__main__":

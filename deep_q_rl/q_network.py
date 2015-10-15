@@ -30,8 +30,7 @@ class DeepQLearner:
                  rms_epsilon, momentum, clip_delta, freeze_interval,
                  batch_size, network_type, update_rule,
                  batch_accumulator, rng,
-                 input_scale=255.0,
-                 exploration_strategy='epsilon_greedy',
+                 input_scale=255.0
                  ):
 
         self.input_width = input_width
@@ -47,8 +46,6 @@ class DeepQLearner:
         self.clip_delta = clip_delta
         self.freeze_interval = freeze_interval
         self.rng = rng
-
-        self.exploration_strategy = exploration_strategy
 
         lasagne.random.set_rng(self.rng)
 
@@ -216,24 +213,40 @@ class DeepQLearner:
         return self._q_vals()[0]
 
     def choose_action(self, state, epsilon):
-        """
-        @k8si use whatever exploration_strategy is specified to sample past q_vals and pick the next action
-        to use.
-        """
-        if self.exploration_strategy == 'epsilon_greedy' or self.exploration_strategy == 'epsilon_decay':
-            # with probability epsilon, choose a random action
-            if self.rng.rand() < epsilon:
-                return self.rng.randint(0, self.num_actions)
-            # else choose "best" action
-            q_vals = self.q_vals(state)
-            return np.argmax(q_vals)
-        else:
-            tau = 1.0
-            q_vals = self.q_vals(state)
-            e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
-            Z = np.sum(e_q_vals)
-            normalized = map(lambda x: x/Z, e_q_vals)
-            return np.argmax(normalized)
+        # with probability epsilon, choose a random action
+        if self.rng.rand() < epsilon:
+            return self.rng.randint(0, self.num_actions)
+        # else choose "best" action
+        q_vals = self.q_vals(state)
+        return np.argmax(q_vals)
+
+    def choose_action_boltzmann(self, state, tau):
+        q_vals = self.q_vals(state)
+        e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
+        Z = np.sum(e_q_vals)
+        normalized = map(lambda x: x/Z, e_q_vals)
+        np.random.choice(normalized.size, p=normalized)
+
+    # def choose_action(self, state, epsilon):
+    #     """
+    #     @k8si use whatever exploration_strategy is specified to sample past q_vals and pick the next action
+    #     to use.
+    #     """
+    #     if self.exploration_strategy == 'epsilon_greedy':
+    #         # with probability epsilon, choose a random action
+    #         if self.rng.rand() < epsilon:
+    #             return self.rng.randint(0, self.num_actions)
+    #         # else choose "best" action
+    #         q_vals = self.q_vals(state)
+    #         return np.argmax(q_vals)
+    #     else:
+    #         tau = 1.0 ### TODO how to thread tau/tau-decay into code
+    #         q_vals = self.q_vals(state)
+    #         e_q_vals = map(lambda x: np.exp(x/tau), q_vals)
+    #         Z = np.sum(e_q_vals)
+    #         normalized = map(lambda x: x/Z, e_q_vals)
+    #         np.random.choice(normalized.size, p=normalized)
+
 
     def reset_q_hat(self):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
