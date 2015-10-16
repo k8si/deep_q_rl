@@ -253,7 +253,6 @@ def launch(args, defaults, description):
                                   parameters.exploration_strategy,
                                   parameters.tau_start,
                                   parameters.tau_min,
-                                  parameters.tau_decay,
                                   parameters.tau_minibatch_size
                                   )
 
