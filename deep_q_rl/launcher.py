@@ -146,7 +146,7 @@ def process_args(args, defaults, description):
                         default=defaults.EXPLORATION_STRATEGY, help=('exploration strategy'))
     parser.add_argument('--tau-start', dest="tau_start", type=float, default=defaults.TAU_START)
     parser.add_argument('--tau-min', dest="tau_min", type=float, default=defaults.TAU_MIN)
-    parser.add_argument('--tau-decay', dest="tau_decay", type=float, default=defaults.TAU_DECAY)
+    # parser.add_argument('--tau-decay', dest="tau_decay", type=float, default=defaults.TAU_DECAY)
     parser.add_argument('--tau-minibatch-size', dest="tau_minibatch_size", type=int, default=defaults.TAU_MINIBATCH_SIZE)
 
     parameters = parser.parse_args(args)

@@ -26,7 +26,6 @@ class NeuralAgent(object):
                  exploration_strategy,
                  tau_start,
                  tau_min,
-                 tau_decay,
                  tau_minibatch_size):
 
         self.network = q_network
@@ -42,7 +41,6 @@ class NeuralAgent(object):
         self.exploration_strategy = exploration_strategy
         self.tau_start = tau_start
         self.tau_min = tau_min
-        self.tau_decay = tau_decay
         self.tau_minibatch_size = tau_minibatch_size
 
         self.phi_length = self.network.num_frames
@@ -77,6 +75,7 @@ class NeuralAgent(object):
                                                   phi_length=self.phi_length)
 
         self.tau = self.tau_start
+        self.tau_decay = ((self.tau_start - self.tau_min)/self.tau_minibatch_size)
 
         self.epsilon = self.epsilon_start
         if self.epsilon_decay != 0:

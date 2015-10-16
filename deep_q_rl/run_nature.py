@@ -24,7 +24,7 @@ class Defaults:
     # Experiment Parameters
     # ----------------------
     STEPS_PER_EPOCH = 250000
-    EPOCHS = 200 #### 15
+    EPOCHS = 15
     STEPS_PER_TEST = 125000
 
     # ----------------------
@@ -71,10 +71,9 @@ class Defaults:
 
     EXPLORATION_STRATEGY = 'epsilon-greedy'
 
-    TAU_START = 1000.0 # every epoch, tau = tau - 2.0
+    TAU_START = float(STEPS_PER_EPOCH) # every epoch, tau = tau - 2.0
     TAU_MIN = 1.0
-    TAU_DECAY = 2.0
-    TAU_MINIBATCH_SIZE = 200 ### decay tau every [this many] steps
+    TAU_MINIBATCH_SIZE = STEPS_PER_EPOCH / 100
 
 
 
