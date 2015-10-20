@@ -187,10 +187,7 @@ class NeuralAgent(object):
         #TESTING---------------------------
         if self.testing:
             self.episode_reward += reward
-            if strategy == 'boltzmann':
-                action = self._choose_action_boltzmann(self.test_data_set, .05, observation, np.clip(reward, -1, 1))
-            else:
-                action = self._choose_action(self.test_data_set, .05,
+            action = self._choose_action(self.test_data_set, .05,
                                          observation, np.clip(reward, -1, 1))
 
         #NOT TESTING---------------------------
